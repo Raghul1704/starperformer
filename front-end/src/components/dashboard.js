@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Axios from "axios";
 
 
@@ -8,6 +8,7 @@ function Dashboard() {
     const location = useLocation();
     const data = location.state;
     const user_name = data[0].USER_NAME;
+    let navigate = useNavigate();
 
     const [popup, setPopup] = useState(false);
     const [view, setView] = useState(false);
@@ -40,7 +41,7 @@ function Dashboard() {
     };
 
     useEffect(() => {
-        console.log('jjjjj');
+       console.log(user_name);
         Axios.post("http://localhost:3001/getcases", { username: user_name }).then((response) => {
             if (response.data.message) {
                 console.log(response.data.message);
@@ -121,30 +122,38 @@ function Dashboard() {
             <h3>
                 Hello {user_name} !!!
             </h3>
-            <button style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>create_bc(e)}>Create BC</button>
-            <button style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>{view_cases(e)}}>View Cases</button>
-            <button style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>drop_vote(e)}>Vote</button>
-            <button style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>leader(e)}>Star Performer Board</button>
+            <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>create_bc(e)}>Create BC</button>
+            <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>{view_cases(e)}}>View Cases</button>
+            <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>drop_vote(e)}>Vote</button>
+            <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>leader(e)}>Star Performer Board</button>
+
+            <button class="btn btn-danger" style={{float:"right"}} onClick={()=>{navigate('/')}}>Logout</button>
             {
                 popup ? 
                 <div>
                 <form onSubmit={(e)=>form_data(e)}>
+                    <div class="form-group">
                     <label>Write a Business Case:</label>
-                    <input type="text" name="businessCase" required />
+                    <input class="form-control input-normal" type="text" name="businessCase" required />
+                    </div>
                     <br/>
+                    <div class="form-group">
                     <label>Choose a member:</label>
-                    <select name="member">
+                    <select class="form-control" name="member">
                         {members.map((member, index) => (
                             <optgroup key={index}>
                             <option value={member.USER_NAME} >{member.USER_NAME}</option>
                             </optgroup>
                         )) }
                     </select>
+                    </div>
                     <br/>
+                    <div class="form-group">
                     <label>Choose a Date:</label> 
-                    <input type="date" name="submission" required />
+                    <input class="form-control input-normal" type="date" name="submission" required />
+                    </div>
                     <br/>
-                    <button type="submit">submit</button>
+                    <button class="btn btn-danger" type="submit">submit</button>
                 </form> 
                 <div style={{color:"green"}}>{postedstatus}</div>
                 </div>
@@ -154,7 +163,7 @@ function Dashboard() {
 
             {view ?
                 <Fragment>
-                    <table>
+                    <table class="table table-striped table-dark">
                         <thead>
                             <tr>
                                 <th>Case Details</th>
@@ -173,7 +182,7 @@ function Dashboard() {
                                     <td>{c.REPORTED_TIME}</td>
                                     <td>{c.SUBMISSION_TIME}</td>
                                     <td><input type="text" value={solution} onChange={(e) => { setSolution(e.target.value) }} /></td>
-                                    <td><button onClick={(e) => answer(e, c.B_ID, solution)}>Answer</button></td>
+                                    <td><button class="btn btn-success" onClick={(e) => answer(e, c.B_ID, solution)}>Answer</button></td>
                                 </tr>
                             ))
 
@@ -187,7 +196,7 @@ function Dashboard() {
             {
                 voting ?
                 <div>
-                    <table>
+                    <table class="table table-striped table-dark">
                         <thead>
                             <tr>
                                 <th>Business Case</th>
@@ -202,7 +211,7 @@ function Dashboard() {
                                     <td>{v.B_CASES}</td>
                                     <td>{v.SOLUTION}</td>
                                     <td>{v.VOTES}</td>
-                                    <td><button onClick={(e) => increase_vote(e, v.B_ID, v.R_ID, v.VOTES)}>Vote</button></td>
+                                    <td><button class="btn btn-warning" onClick={(e) => increase_vote(e, v.B_ID, v.R_ID, v.VOTES)}>Vote</button></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -214,7 +223,7 @@ function Dashboard() {
 
             {
                 board ?
-                    <table>
+                    <table class="table table-striped table-dark">
                         <thead>
                             <tr>
                                 <th>Business Case</th>
@@ -228,7 +237,7 @@ function Dashboard() {
                             {
                                 leaderr.map((l) => (
                                     <tr key={l.V_ID}>
-                                        <td>{l.B_CASES}</td>
+                                        <td scope="row">{l.B_CASES}</td>
                                         <td>{l.REPORTED_BY}</td>
                                         <td>{l.ASSIGNED_TO}</td>
                                         <td>{l.SOLUTION}</td>

@@ -55,8 +55,9 @@ app.post('/postCase',(req,res)=>{
     const member = req.body.member;
     const date = req.body.date;
     const username = req.body.username;
+    const time = Date.now();
     
-    conn.query("INSERT INTO Business_TBL (B_CASES, REPORTED_BY, ASSIGNED_TO, SUBMISSION_TIME) VALUES(?, ?, ?, ?)",[cases, username, member, date],
+    conn.query("INSERT INTO Business_TBL (B_CASES, REPORTED_BY, ASSIGNED_TO, SUBMISSION_TIME, REPORTED_TIME) VALUES(?, ?, ?, ?, ?)",[cases, username, member, date, time],
     (err, result)=>{
         if(err){
             console.log(err);
@@ -77,7 +78,7 @@ app.post('/getcases', (req, res) => {
     conn.query("SELECT B_ID, B_CASES, REPORTED_BY, REPORTED_TIME, SUBMISSION_TIME FROM Business_TBL WHERE ASSIGNED_TO = ?", [username],
         (err, result) => {
             if (err) {
-                req.setEncoding({ err: err });
+                res.send(result);
             } else {
                 if (result.length > 0) {
                     res.send(result);
@@ -119,7 +120,7 @@ app.get('/getLeader', (req, res) => {
     conn.query("select V.V_ID, B.B_CASES, B.REPORTED_BY, B.ASSIGNED_TO, R.SOLUTION, V.VOTES FROM Business_TBL B JOIN Review_TBL R ON B.B_ID = R.B_ID JOIN Votes_TBL V ON R.R_ID = V.R_ID ORDER BY V.VOTES desc",
         (err, result) => {
             if (err) {
-                req.setEncoding({ err: err });
+                res.send(result);
             } else {
                     res.send(result);
             }
