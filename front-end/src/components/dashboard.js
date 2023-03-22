@@ -51,6 +51,7 @@ function Dashboard() {
         });
     }, [])
 
+
     const view_cases = (e) => {
         e.preventDefault();
         setView(!view);
@@ -68,12 +69,11 @@ function Dashboard() {
         setVoting(!voting);
     }
 
-    const increase_vote = (e, b_id, r_id, votes) => {
+    const increase_vote = (e, b_id) => {
         e.preventDefault();
         Axios.post("http://localhost:3001/vote", {
             b_id: b_id,
-            r_id: r_id,
-            votes: votes + 1
+            username: user_name
         }).then((res) => {
             if (res.data.message) {
                 setVotedstatus(res.data.message);
@@ -81,15 +81,6 @@ function Dashboard() {
         })
     }
 
-    const answer = (e, b_id, solution) => {
-        e.preventDefault();
-        Axios.post("http://localhost:3001/solution", { b_id, solution }).then((res) => {
-            if (res.data.message) {
-                setAnsweredstatus(res.data.message);
-            }
-        })
-
-    }
 
     useEffect(() => {
         Axios.get("http://localhost:3001/getMembers").then((response) => {
@@ -107,8 +98,8 @@ function Dashboard() {
         console.log("posting...")
         Axios.post("http://localhost:3001/postCase",{
             cases: e.target.businessCase.value,
-            member: e.target.member.value,
-            date: e.target.submission.value,
+            iteration: e.target.iteration.value,
+            sprint: e.target.sprint.value,
             username: user_name
         }).then((res)=>{
             if(res.data.message){
@@ -124,7 +115,7 @@ function Dashboard() {
             </h3>
             <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>create_bc(e)}>Create BC</button>
             <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>{view_cases(e)}}>View Cases</button>
-            <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>drop_vote(e)}>Vote</button>
+
             <button class="btn btn-primary" style={{margin:"10px 10px 10px 10px"}} onClick={(e)=>leader(e)}>Star Performer Board</button>
 
             <button class="btn btn-danger" style={{float:"right"}} onClick={()=>{navigate('/')}}>Logout</button>
@@ -138,19 +129,13 @@ function Dashboard() {
                     </div>
                     <br/>
                     <div class="form-group">
-                    <label>Choose a member:</label>
-                    <select class="form-control" name="member">
-                        {members.map((member, index) => (
-                            <optgroup key={index}>
-                            <option value={member.USER_NAME} >{member.USER_NAME}</option>
-                            </optgroup>
-                        )) }
-                    </select>
+                    <label>Mention the Iteration:</label>
+                    <input class="form-control input-normal" type="text" name="iteration" required/>
                     </div>
                     <br/>
                     <div class="form-group">
-                    <label>Choose a Date:</label> 
-                    <input class="form-control input-normal" type="date" name="submission" required />
+                    <label>Mention the Sprint:</label> 
+                    <input class="form-control input-normal" type="text" name="sprint" required />
                     </div>
                     <br/>
                     <button class="btn btn-danger" type="submit">submit</button>
@@ -167,10 +152,8 @@ function Dashboard() {
                         <thead>
                             <tr>
                                 <th>Case Details</th>
-                                <th>Reporter</th>
-                                <th>Created Date</th>
-                                <th>Submission Date</th>
-                                <th>Solution</th>
+                                <th>Iteration</th>
+                                <th>Sprint</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -178,47 +161,17 @@ function Dashboard() {
                             {cases.map((c) => (
                                 <tr key={c.B_ID}>
                                     <td>{c.B_CASES}</td>
-                                    <td>{c.REPORTED_BY}</td>
-                                    <td>{c.REPORTED_TIME}</td>
-                                    <td>{c.SUBMISSION_TIME}</td>
-                                    <td><input type="text" value={solution} onChange={(e) => { setSolution(e.target.value) }} /></td>
-                                    <td><button class="btn btn-success" onClick={(e) => answer(e, c.B_ID, solution)}>Answer</button></td>
+                                    <td>{c.ITERATION}</td>
+                                    <td>{c.SPRINT}</td>
+                                    <td><button class="btn btn-warning" onClick={(e) => increase_vote(e, c.B_ID)}>Vote</button></td>
                                 </tr>
                             ))
 
                             }
                         </tbody>
                     </table>
-                    <div style={{color: "green"}}>{answeredstatus}</div>
-                </Fragment> : null
-            }
-
-            {
-                voting ?
-                <div>
-                    <table class="table table-striped table-dark">
-                        <thead>
-                            <tr>
-                                <th>Business Case</th>
-                                <th>Solution</th>
-                                <th>Votes</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {vote.map((v) => (
-                                <tr key={v.V_ID}>
-                                    <td>{v.B_CASES}</td>
-                                    <td>{v.SOLUTION}</td>
-                                    <td>{v.VOTES}</td>
-                                    <td><button class="btn btn-warning" onClick={(e) => increase_vote(e, v.B_ID, v.R_ID, v.VOTES)}>Vote</button></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
                     <div style={{color: "green"}}>{votedstatus}</div>
-                    </div>
-                    : null
+                </Fragment> : null
             }
 
             {
@@ -228,19 +181,19 @@ function Dashboard() {
                             <tr>
                                 <th>Business Case</th>
                                 <th>Reporter</th>
-                                <th>Assignee</th>
-                                <th>Solution</th>
+                                <th>Iteration</th>
+                                <th>Sprint</th>
                                 <th>Votes</th>
                             </tr>
                         </thead>
                         <tbody>
                             {
                                 leaderr.map((l) => (
-                                    <tr key={l.V_ID}>
+                                    <tr key={l.B_ID}>
                                         <td scope="row">{l.B_CASES}</td>
                                         <td>{l.REPORTED_BY}</td>
-                                        <td>{l.ASSIGNED_TO}</td>
-                                        <td>{l.SOLUTION}</td>
+                                        <td>{l.ITERATION}</td>
+                                        <td>{l.SPRINT}</td>
                                         <td>{l.VOTES}</td>
                                     </tr>
                                 ))

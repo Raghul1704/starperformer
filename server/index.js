@@ -36,28 +36,14 @@ app.post('/login', (req, res) => {
     )
 })
 
-app.get('/getMembers', (req, res) => {
-    conn.query("SELECT USER_NAME FROM users", (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            if (result.length > 0) {
-                res.send(result);
-            } else {
-                res.send({ message: "Not able to fetch team members" });
-            }
-        }
-    })
-})
 
 app.post('/postCase',(req,res)=>{
     const cases = req.body.cases;
-    const member = req.body.member;
-    const date = req.body.date;
+    const iteration = req.body.iteration;
+    const sprint = req.body.sprint;
     const username = req.body.username;
-    const time = Date.now();
     
-    conn.query("INSERT INTO Business_TBL (B_CASES, REPORTED_BY, ASSIGNED_TO, SUBMISSION_TIME, REPORTED_TIME) VALUES(?, ?, ?, ?, ?)",[cases, username, member, date, time],
+    conn.query("INSERT INTO Business_TBL (B_CASES, REPORTED_BY, ITERATION, SPRINT, VOTES) VALUES(?, ?, ?, ?, ?)",[cases, username, iteration, sprint, 0],
     (err, result)=>{
         if(err){
             console.log(err);
@@ -66,7 +52,16 @@ app.post('/postCase',(req,res)=>{
             if(result.affectedRows == 0){
                 res.send({message:"not posted"});
             }else{
-                res.send({message:"posted"});
+                console.log("result", result);
+                conn.query("INSERT INTO Votes_TBL (B_ID, LIKED_BY) VALUES (?, ?)",[result.insertId, "Vinay"],
+                (err, result)=>{
+                    if(err){
+                        console.log(err);
+                    }else{
+                        console.log(result);
+                    }
+                }
+                )
             }
         }
     }
@@ -75,7 +70,7 @@ app.post('/postCase',(req,res)=>{
 
 app.post('/getcases', (req, res) => {
     const username = req.body.username;
-    conn.query("SELECT B_ID, B_CASES, REPORTED_BY, REPORTED_TIME, SUBMISSION_TIME FROM Business_TBL WHERE ASSIGNED_TO = ?", [username],
+    conn.query("SELECT B.B_ID, B.B_CASES, B.ITERATION, B.SPRINT FROM Business_TBL B JOIN Votes_TBL V ON (B.B_ID = V.B_ID) WHERE NOT REPORTED_BY = ? and NOT LIKED_BY = ?", [username, username],
         (err, result) => {
             if (err) {
                 res.send(result);
@@ -117,7 +112,7 @@ app.post('/solution', (req, res) => {
 });
 
 app.get('/getLeader', (req, res) => {
-    conn.query("select V.V_ID, B.B_CASES, B.REPORTED_BY, B.ASSIGNED_TO, R.SOLUTION, V.VOTES FROM Business_TBL B JOIN Review_TBL R ON B.B_ID = R.B_ID JOIN Votes_TBL V ON R.R_ID = V.R_ID ORDER BY V.VOTES desc",
+    conn.query("SELECT B_CASES,REPORTED_BY, ITERATION, SPRINT, VOTES FROM Business_TBL ORDER BY VOTES desc",
         (err, result) => {
             if (err) {
                 res.send(result);
@@ -130,15 +125,33 @@ app.get('/getLeader', (req, res) => {
 })
 
 app.post('/vote', (req, res) => {
-    const votes = req.body.votes;
-    const r_id = req.body.r_id;
-
-        conn.query("UPDATE Votes_TBL SET VOTES = ? WHERE R_ID = ?;", [votes, r_id],
+    const b_id = req.body.b_id;
+    const user = req.body.username;
+        conn.query("INSERT INTO Votes_TBL (B_ID, LIKED_BY) VALUES (?, ?)", [b_id, user],
             (err, result) => {
                 if (err) {
                     console.log(err);
                 } else {
-                    res.send({message:"voted+++"});
+                    //res.send({message:"voted+++"});
+                    conn.query("SELECT VOTES FROM Business_TBL WHERE B_ID = ?", [b_id],
+                    (err,result)=>{
+                        if(err){
+                            console.log(err);
+                        }else{
+                            let votes = result[0].VOTES;
+                            votes = votes+1;
+                            conn.query("UPDATE Business_TBL SET VOTES = ? WHERE B_ID = ?",[votes, b_id],
+                            (err,result)=>{
+                                if(err){
+                                    console.log(err);
+                                }else{
+                                    res.send({message:"voted...."});
+                                }
+                            }
+                            )
+                        }
+                    }
+                    )
                 }
             }
         )
@@ -146,15 +159,7 @@ app.post('/vote', (req, res) => {
 
 app.post('/get',(req,res)=>{
     const username = req.body.username;
-    conn.query("select V.V_ID, B.B_ID, R.R_ID, B.B_CASES, R.SOLUTION, V.VOTES FROM Business_TBL B JOIN Review_TBL R ON B.B_ID = R.B_ID JOIN Votes_TBL V ON R.R_ID = V.R_ID WHERE NOT B.ASSIGNED_TO = ?",[username], 
-    (err, result)=>{
-        if(err){
-            console.log(err);
-        }else{
-            res.send(result);
-        }
-    }
-    )
+   
 })
 
 
@@ -163,3 +168,5 @@ app.post('/get',(req,res)=>{
 app.listen(3001, () => {
     console.log("server running in port 3001");
 })
+
+//select V.V_ID, B.B_CASES, B.REPORTED_BY, B.ASSIGNED_TO, R.SOLUTION, V.VOTES FROM Business_TBL B JOIN Review_TBL R ON B.B_ID = R.B_ID JOIN Votes_TBL V ON R.R_ID = V.R_ID ORDER BY V.VOTES desc"
